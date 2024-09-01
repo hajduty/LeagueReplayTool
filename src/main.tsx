@@ -3,16 +3,22 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { HashRouter, Route, Routes } from 'react-router-dom'
-import { Render } from './Pages/Render.tsx'
+import { RenderForm } from './Pages/Render.tsx'
+import { ThemeProvider } from '@emotion/react'
+import theme from './theme.ts'
+import { VisibilityForm } from './Pages/Visibility.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<App/>}/>
-        <Route path="render" element={<Render/>}/>
-      </Routes>
-    </HashRouter>
+    <ThemeProvider theme={theme}>
+      <HashRouter>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/render" element={<RenderForm />} />
+          <Route path="/visibility" element={<VisibilityForm />} />
+        </Routes>
+      </HashRouter>
+    </ThemeProvider>
   </React.StrictMode>,
 )
 

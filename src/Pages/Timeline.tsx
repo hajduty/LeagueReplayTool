@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Keyframe, vec3 } from "../Models/Keyframe";
 import { KeyframeForm } from "../Shared/Keyframe";
 import KeyframeIcon from "../Shared/KeyframeIcon";
-import { IconArrowBack, IconEyeCog, IconKey, IconKeyframe, IconKeyframes, IconPlayerPlay, IconSquareRoundedMinus, IconTrash, IconVectorBezier2 } from "@tabler/icons-react";
+import { IconArrowBack, IconEyeCog, IconKey, IconKeyframe, IconKeyframeAlignCenter, IconKeyframes, IconMinimize, IconPlayerPlay, IconRewindBackward15, IconScanEye, IconSquareRoundedMinus, IconTrash, IconVectorBezier2, IconWindowMinimize } from "@tabler/icons-react";
 import Tooltip from "../Shared/Tooltip";
+import { Button } from "../Shared/Button";
 
 export const Timeline = () => {
     const [zoom, setZoom] = useState(1);
@@ -120,7 +121,7 @@ export const Timeline = () => {
             }
             return x;
         })
-
+        
         return setKeyframe(keys);
     }
 
@@ -128,23 +129,21 @@ export const Timeline = () => {
         window.ipcRenderer.send('open-second-window');
     };
 
+    const openVisibility = () => {
+        window.ipcRenderer.send('open-visibility');
+    };
+
+    const minimizeWindow = () => {
+        window.ipcRenderer.send('minimize');
+    };
+
     return (
         <div className="p-1 drag-area bg-gradient-to-t from-gold6 to-gold5">
             <div className="bg-mainbg p-1">
                 <div className="flex flex-row space-x-12 p-2 border-2 border-innerborder rounded-none bg-mainbg">
                     <div className="flex flex-row space-x-2 no-drag">
-                        <Tooltip content={"Start sequence"}>
-                            <button className="w-7 border-gold5 bg-gradient-to-b from-blue5 to-grey3 border-2 text-nowrap items-center align-middle justify-center flex"
-                                onClick={(e) => { e.preventDefault() }}>
-                                <IconPlayerPlay className="stroke-gold4 w-4"></IconPlayerPlay>
-                            </button>
-                        </Tooltip>
-                        <Tooltip content={"Go back 15 seconds"}>
-                            <button className="w-7 border-gold5 bg-gradient-to-b from-blue5 to-grey3 border-2 text-nowrap items-center align-middle justify-center flex"
-                                onClick={(e) => { e.preventDefault() }}>
-                                <IconArrowBack className="stroke-gold4 w-4"></IconArrowBack>
-                            </button>
-                        </Tooltip>
+                        <Button onClick={() => {}} content={<IconPlayerPlay className="stroke-gold4 w-4"></IconPlayerPlay>} tooltip={"Start sequence"} />
+                        <Button onClick={() => {}} content={<IconRewindBackward15 className="stroke-gold4 w-4"></IconRewindBackward15>} tooltip={"Go back 15 seconds"} />
                     </div>
                     <div className="flex flex-col grow space-y-2 no-drag">
                         <div className="w-auto overflow-x-scroll h-fit custom-scrollbar no-drag">
@@ -198,45 +197,19 @@ export const Timeline = () => {
                                 )}
                             </div>
                         </div>
-                        <div className="space-x-4 flex flex-row">
-                            <Tooltip content={"Add keyframe"}>
-                                <button className="w-7 border-gold5 bg-gradient-to-b from-blue5 to-grey3 border-2 text-nowrap items-center align-middle justify-center flex"
-                                    onClick={() => addKeyframe()}>
-                                    <IconKeyframe className="stroke-gold4 w-4"></IconKeyframe>
-                                </button>
-                            </Tooltip>
-                            <Tooltip content={"Add curves to selected"}>
-                                <button className="w-7 border-gold5 bg-gradient-to-b from-blue5 to-grey3 border-2 text-nowrap items-center align-middle justify-center flex"
-                                    onClick={() => deleteKeyframe()}>
-                                    <IconVectorBezier2 className="stroke-gold4 w-4"></IconVectorBezier2>
-                                </button>
-                            </Tooltip>
-                            <Tooltip content={"Clear selected keyframes"}>
-                                <button className="w-7 border-gold5 bg-gradient-to-b from-blue5 to-grey3 border-2 text-nowrap items-center align-middle justify-center flex"
-                                    onClick={() => deleteKeyframe()}>
-                                    <IconSquareRoundedMinus className="stroke-gold4 w-4"></IconSquareRoundedMinus>
-                                </button>
-                            </Tooltip>
-                            <Tooltip content={"Clear all keyframes"}>
-                                <button className="w-7 border-gold5 bg-gradient-to-b from-blue5 to-grey3 border-2 text-nowrap items-center align-middle justify-center flex"
-                                    onClick={() => setKeyframe([])}>
-                                    <IconTrash className="stroke-gold4 w-4"></IconTrash>
-                                </button>
-                            </Tooltip>
-                            <span></span>
-                            <span></span>
-                            <Tooltip content={"Environment settings"}>
-                                <button className="w-7 border-gold5 bg-gradient-to-b from-blue5 to-grey3 border-2 text-nowrap items-center align-middle justify-center flex"
-                                    onClick={openSecondWindow}>
-                                    <IconEyeCog className="stroke-gold4 w-4"></IconEyeCog>
-                                </button>
-                            </Tooltip>
-                            <Tooltip content={"Keyframe settings"}>
-                                <button className="w-7 border-gold5 bg-gradient-to-b from-blue5 to-grey3 border-2 text-nowrap items-center align-middle justify-center flex"
-                                    onClick={() => deleteKeyframe()}>
-                                    <IconKeyframes className="stroke-gold4 w-4"></IconKeyframes>
-                                </button>
-                            </Tooltip>
+                        <div className="space-x-20 flex flex-row">
+                            <span className="space-x-4 flex flex-row">
+                                <Button onClick={() => addKeyframe()} content={<IconKeyframe className="stroke-gold4 w-4"></IconKeyframe>} tooltip={"Add keyframe"} />
+                                <Button onClick={() => deleteKeyframe()} content={<IconVectorBezier2 className="stroke-gold4 w-4"></IconVectorBezier2>} tooltip={"Add curves to selected"} />
+                                <Button onClick={() => deleteKeyframe()} content={<IconSquareRoundedMinus className="stroke-gold4 w-4"></IconSquareRoundedMinus>} tooltip={"Clear selected keyframes"} />
+                                <Button onClick={() => setKeyframe([])} content={<IconTrash className="stroke-gold4 w-4"></IconTrash>} tooltip={"Clear all keyframes"} />
+                            </span>
+                            <span className="space-x-4 flex flex-row">
+                                <Button onClick={openSecondWindow} content={<IconEyeCog className="stroke-gold4 w-4"></IconEyeCog>} tooltip={"Environment settings"} />
+                                <Button onClick={openVisibility} content={<IconScanEye className="stroke-gold4 w-4"></IconScanEye>} tooltip={"Visibility settings"} />
+                                <Button onClick={minimizeWindow} content={<IconKeyframeAlignCenter className="stroke-gold4 w-4"></IconKeyframeAlignCenter>} tooltip={"Keyframe settings"} />
+                            </span>
+                            <Button onClick={minimizeWindow} content={<IconWindowMinimize className="stroke-gold4 w-4"></IconWindowMinimize>} tooltip={"Minimize window"} />
                         </div>
                     </div>
                 </div>

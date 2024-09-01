@@ -10,14 +10,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@mui/material": "^6.0.1",
     "@tabler/icons-react": "^3.14.0",
+    "axios": "^1.7.7",
     "react": "^18.2.0",
+    "react-color": "^2.19.3",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.26.1",
     "vite-tsconfig-paths": "^5.0.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",
+    "@types/react-color": "^3.0.12",
     "@types/react-dom": "^18.2.21",
     "@typescript-eslint/eslint-plugin": "^7.1.1",
     "@typescript-eslint/parser": "^7.1.1",

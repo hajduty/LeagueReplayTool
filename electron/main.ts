@@ -1,7 +1,9 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
+
 import path from 'node:path'
+import { getRender, postRender } from './requests';
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -15,6 +17,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // │ │ ├── main.js
 // │ │ └── preload.mjs
 // │
+
 process.env.APP_ROOT = path.join(__dirname, '..')
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
@@ -31,14 +34,20 @@ function createWindow() {
         icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.mjs'),
+            nodeIntegration:  true,
         },
         frame: false,
-        width: 650,
+        width: 900,
         height: 110,
+        maxHeight: 110,
+        minHeight: 110,
         resizable: true,
         roundedCorners: false,
-        thickFrame: false
+        backgroundColor: "#081110",
+        thickFrame: false,
     })
+
+    win.setAlwaysOnTop(true, "screen-saver",1);
 
     // Test active push message to Renderer-process.
     win.webContents.on('did-finish-load', () => {
@@ -66,11 +75,13 @@ function createSecondWindow() {
         frame: false,
         resizable: true,
         roundedCorners: false,
-        thickFrame: false,
+        backgroundColor: "#081110",
         webPreferences: {
             preload: path.join(__dirname, 'preload.mjs'),
         }
     });
+
+    secondWindow.setAlwaysOnTop(true, "screen-saver",1);
 
     if (VITE_DEV_SERVER_URL) {
         secondWindow.loadURL(VITE_DEV_SERVER_URL)
@@ -90,9 +101,87 @@ function createSecondWindow() {
     });
 }
 
+let visibilityWindow: BrowserWindow | null;
+
+function createVisibilityWindow() {
+    if (visibilityWindow) {
+        return;
+    }
+
+    visibilityWindow = new BrowserWindow({
+        width: 600,
+        height: 400,
+        frame: false,
+        resizable: true,
+        roundedCorners: false,
+        thickFrame: false,
+        backgroundColor: "#081110",
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.mjs'),
+        }
+    });
+
+    visibilityWindow.setAlwaysOnTop(true, "screen-saver",1);
+
+    if (VITE_DEV_SERVER_URL) {
+        visibilityWindow.loadURL(VITE_DEV_SERVER_URL)
+    } else {
+        // win.loadFile('dist/index.html')
+        visibilityWindow.loadFile(path.join(RENDERER_DIST, 'index.html/#/visibility'))
+    }
+
+    visibilityWindow.on('closed', () => {
+        visibilityWindow = null;
+    });
+
+    visibilityWindow.webContents.on('did-finish-load', () => {
+        visibilityWindow?.webContents.executeJavaScript(`
+            window.location.hash = '#/visibility';
+        `);
+    });
+}
+
+ipcMain.on('open-visibility', (event, arg) => {
+    if (visibilityWindow != null) {
+        visibilityWindow.show();
+    } else {
+        createVisibilityWindow();
+    }
+});
+
 ipcMain.on('open-second-window', (event, arg) => {
-    createSecondWindow();
-    console.log("hello???");
+    if (secondWindow != null) {
+        secondWindow.show();
+    } else {
+        createSecondWindow();
+    }
+});
+
+ipcMain.on('close-visibility', (event, arg) => {
+    visibilityWindow?.close();
+});
+
+ipcMain.on('minimize', (event, arg) => {
+    win?.minimize();
+    secondWindow?.minimize();
+    visibilityWindow?.minimize();
+});
+
+ipcMain.on('post-render', (event, arg) => {
+    //console.log(arg);
+    postRender(arg);
+});
+
+ipcMain.on('post-timeline', (event, arg) => {
+    //console.log(arg);
+    postRender(arg);
+});
+
+ipcMain.on('get-render', async (event, arg) => {
+    console.log("get render called");
+    const data: any = await getRender();
+    //console.log(data);
+    event.reply('main-get-render', data);
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

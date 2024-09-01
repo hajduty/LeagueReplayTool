@@ -11,15 +11,8 @@ export interface KeyframeProp {
 export const KeyframeForm: React.FC<KeyframeProp> = ({ position }: KeyframeProp) => {
     return (
         <>
-            {/*
-                <div className="absolute top-1/2 transform -translate-y-1/2 bg-green-800 w-0.5 h-8 flex items-center justify-center text-white"
-                    style={{ left: position }}
-                >
-                </div>
-            */}
             <KeyframeIcon style={{ left: position }}
                 className="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2 flex items-center justify-center text-black">
-
             </KeyframeIcon>
         </>
     )
