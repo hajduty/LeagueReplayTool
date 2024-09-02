@@ -1,10 +1,10 @@
 import './App.css'
-import { Timeline } from './Pages/Timeline'
+import { TimelineForm } from './Pages/Timeline'
 
 function App() {
   return (
     <>
-      <Timeline></Timeline>
+      <TimelineForm></TimelineForm>
       <div className='bg-mainbg flex h-full fixed w-full overflow-y-hidden drag-area border-0 rounded-none'>
       </div>
     </>

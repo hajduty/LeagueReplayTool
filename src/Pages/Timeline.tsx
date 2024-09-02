@@ -5,17 +5,28 @@ import KeyframeIcon from "../Shared/KeyframeIcon";
 import { IconArrowBack, IconEyeCog, IconKey, IconKeyframe, IconKeyframeAlignCenter, IconKeyframes, IconMinimize, IconPlayerPlay, IconRewindBackward15, IconScanEye, IconSquareRoundedMinus, IconTrash, IconVectorBezier2, IconWindowMinimize } from "@tabler/icons-react";
 import Tooltip from "../Shared/Tooltip";
 import { Button } from "../Shared/Button";
+import { Timeline } from "../Models/Timeline";
 
-export const Timeline = () => {
+const defaultState = {
+    length: 1000,
+    paused: false,
+    seeking: false,
+    speed: 1.0,
+    time: 100,
+}
+
+export const TimelineForm = () => {
+    const [timeline, setTimeline] = useState<Timeline>(defaultState);
     const [zoom, setZoom] = useState(1);
-    const [cursorTime, setCursorTime] = useState(4500);
-    const [hoverTime, setHoverTime] = useState(4500);
+    const [cursorTime, setCursorTime] = useState(100);
+    const [hoverTime, setHoverTime] = useState(100);
     const [keyframe, setKeyframe] = useState<Array<Keyframe>>([]);
     const [selectedKeyframe, setSelectedKeyframe] = useState<Keyframe>();
     const timelineRef = useRef(null);
-    const startTime = 0;
-    const endTime = 2500; // Updated end time
-    const timelineLength = endTime - startTime;
+    const [pending, setPending] = useState<Boolean>(false)
+    //const startTime = 0;
+    //const endTime = 2500; // Updated end time
+    // const timelineLength = endTime - startTime;
 
     useEffect(() => {
         const handleScroll = (e: any) => {
@@ -41,6 +52,23 @@ export const Timeline = () => {
         };
     }, []);
 
+    useEffect(() => {
+        const fetchData = () => {
+            if (pending)
+                return;
+            window.ipcRenderer.invoke('get-timeline').then((newData) => {
+                setTimeline(
+                    newData
+                );
+                setCursorTime(newData.time);
+            });
+        };
+
+        const intervalId = setInterval(fetchData, 1000);
+
+        return () => clearInterval(intervalId);
+    }, [pending]);
+
     const handleZoomIn = () => {
         setZoom(prevZoom => Math.min(prevZoom + 0.25, 50));
     };
@@ -54,14 +82,21 @@ export const Timeline = () => {
         if (timelineElement) {
             const rect = timelineElement.getBoundingClientRect();
             const position = e.clientX - rect.left;
-            const time = (position / rect.width) * timelineLength;
-            setHoverTime(Math.min(Math.max(time, startTime), endTime));
+            const time = (position / rect.width) * timeline.length;
+            setHoverTime(Math.min(Math.max(time, 0), timeline.length));
         }
     }
 
     const handleTimelineClick = () => {
+        setPending(true);
         window.addEventListener('mouseup', handleMouseUp);
         setCursorTime(hoverTime);
+        const data = { time: hoverTime, seeking: true };
+
+        window.ipcRenderer.invoke('post-timeline', { key: "time", value: hoverTime }).finally(() => {
+            setPending(false);
+        });
+        //{ key, value: !visibility[key] }
     };
 
     const handleMouseUp = () => {
@@ -70,15 +105,15 @@ export const Timeline = () => {
 
     const getPosition = (time: number) => {
         //return `${Math.min(((time / timelineLength) * 100)), ((endTime / timelineLength) * 100)}%`;
-        if (time > endTime)
-            return endTime;
-        return `${Math.min(time / timelineLength) * 100}%`;
+        if (time > timeline.length)
+            return timeline.length;
+        return `${Math.min(time / timeline.length) * 100}%`;
     };
 
     const generateTimeMarkers = () => {
         const markers = [];
-        const interval = timelineLength / 50; // 100 markers
-        for (let i = 0; i <= timelineLength; i += interval) {
+        const interval = timeline.length / 50; // 100 markers
+        for (let i = 0; i <= timeline.length; i += interval) {
             markers.push(i);
         }
         return markers;
@@ -111,8 +146,8 @@ export const Timeline = () => {
         if (timelineElement) {
             const rect = timelineElement.getBoundingClientRect();
             const position = e.clientX - rect.left;
-            const time = (position / rect.width) * timelineLength;
-            setHoverTime(Math.min(Math.max(time, startTime), endTime));
+            const time = (position / rect.width) * timeline.length;
+            setHoverTime(Math.min(Math.max(time, 0), timeline.length));
         }
 
         const keys: any = keyframe.map(x => {
@@ -121,7 +156,7 @@ export const Timeline = () => {
             }
             return x;
         })
-        
+
         return setKeyframe(keys);
     }
 
@@ -142,8 +177,8 @@ export const Timeline = () => {
             <div className="bg-mainbg p-1">
                 <div className="flex flex-row space-x-12 p-2 border-2 border-innerborder rounded-none bg-mainbg">
                     <div className="flex flex-row space-x-2 no-drag">
-                        <Button onClick={() => {}} content={<IconPlayerPlay className="stroke-gold4 w-4"></IconPlayerPlay>} tooltip={"Start sequence"} />
-                        <Button onClick={() => {}} content={<IconRewindBackward15 className="stroke-gold4 w-4"></IconRewindBackward15>} tooltip={"Go back 15 seconds"} />
+                        <Button onClick={() => { }} content={<IconPlayerPlay className="stroke-gold4 w-4"></IconPlayerPlay>} tooltip={"Start sequence"} />
+                        <Button onClick={() => { }} content={<IconRewindBackward15 className="stroke-gold4 w-4"></IconRewindBackward15>} tooltip={"Go back 15 seconds"} />
                     </div>
                     <div className="flex flex-col grow space-y-2 no-drag">
                         <div className="w-auto overflow-x-scroll h-fit custom-scrollbar no-drag">

@@ -3,7 +3,7 @@ import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
 import path from 'node:path'
-import { getRender, postRender } from './requests';
+import { getReq, postReq } from './requests';
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -39,7 +39,7 @@ function createWindow() {
         frame: false,
         width: 900,
         height: 110,
-        maxHeight: 110,
+        //maxHeight: 110,
         minHeight: 110,
         resizable: true,
         roundedCorners: false,
@@ -169,17 +169,22 @@ ipcMain.on('minimize', (event, arg) => {
 
 ipcMain.on('post-render', (event, arg) => {
     //console.log(arg);
-    postRender(arg);
+    postReq("https://127.0.0.1:2999/replay/render", { [arg.key]: arg.value });
 });
 
-ipcMain.on('post-timeline', (event, arg) => {
-    //console.log(arg);
-    postRender(arg);
+ipcMain.handle('post-timeline', (event, arg) => {
+    console.log('Received arg:', arg);
+    postReq("https://127.0.0.1:2999/replay/playback", { [arg.key]: arg.value });
+});
+
+ipcMain.handle('get-timeline', async (event, arg) => {
+    const data: any = await getReq("https://127.0.0.1:2999/replay/playback");
+    return data;
 });
 
 ipcMain.on('get-render', async (event, arg) => {
     console.log("get render called");
-    const data: any = await getRender();
+    const data: any = await getReq("https://127.0.0.1:2999/replay/render");
     //console.log(data);
     event.reply('main-get-render', data);
 });

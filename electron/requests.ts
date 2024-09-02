@@ -1,4 +1,5 @@
 import axios from "axios";
+import { StartLoggingOptions } from "electron/main";
 import https from "https";
 
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
@@ -7,10 +8,18 @@ const axiosInstance = axios.create({
   httpsAgent,
 });
 
-export const postRender = async (data: any) => {
+export const postReq = async (url: string, data: any) => {
     try {
-        const response = await axiosInstance.post<any>("https://127.0.0.1:2999/replay/render", { [data.key]: data.value });
+        const response = await axiosInstance.post<any>(url, data, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        console.log(data);
         //console.log({ [data.key]: data.value });
+        console.log(response.status);
+        console.log(response.statusText);
+        console.log(response.data);
         return response.data;
     }
     catch(e) {
@@ -18,9 +27,11 @@ export const postRender = async (data: any) => {
     }
 }
 
-export const getRender = async () => {
+export const getReq = async (url: string) => {
     try {
-        const response = await axiosInstance.get<any>("https://127.0.0.1:2999/replay/render");
+        const response = await axiosInstance.get<any>(url);
+        //console.log({ [data.key]: data.value });
+        //console.log(response.data);
         return response.data;
     }
     catch(e) {
