@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { cameraPosition, cameraRotation, Keyframe, vec3 } from "../Models/Keyframe";
 import { KeyframeForm } from "../Shared/Keyframe";
 import KeyframeIcon from "../Shared/KeyframeIcon";
-import { IconArrowBack, IconEyeCog, IconKey, IconKeyframe, IconKeyframeAlignCenter, IconKeyframes, IconMinimize, IconMinus, IconPlayerEject, IconPlayerPause, IconPlayerPlay, IconPlus, IconRewindBackward15, IconScanEye, IconSquareRoundedMinus, IconTrash, IconVectorBezier2, IconWindowMinimize } from "@tabler/icons-react";
+import { IconArrowBack, IconArrowBackUp, IconArrowBackUpDouble, IconArrowDownFromArc, IconArrowUpFromArc, IconEyeCog, IconKey, IconKeyframe, IconKeyframeAlignCenter, IconKeyframes, IconMinimize, IconMinus, IconPlayerEject, IconPlayerPause, IconPlayerPlay, IconPlus, IconRewindBackward15, IconScanEye, IconSquareRoundedMinus, IconTrash, IconVectorBezier2, IconWindowMinimize } from "@tabler/icons-react";
 import Tooltip from "../Shared/Tooltip";
 import { Button } from "../Shared/Button";
 import { Timeline } from "../Models/Timeline";
@@ -25,8 +25,9 @@ export const TimelineForm = () => {
     const [hoverTime, setHoverTime] = useState(100);
     const [keyframe, setKeyframe] = useState<Array<Keyframe>>([]);
     const [selectedKeyframe, setSelectedKeyframe] = useState<Keyframe>();
+    const [pending, setPending] = useState<Boolean>(false);
+    const [sequence, setSequence] = useState<Boolean>(false);
     const timelineRef = useRef(null);
-    const [pending, setPending] = useState<Boolean>(false)
     //const startTime = 0;
     //const endTime = 2500; // Updated end time
     // const timelineLength = endTime - startTime;
@@ -165,6 +166,10 @@ export const TimelineForm = () => {
             return x;
         })
 
+        if (sequence) {
+            sendSequence(keys);
+        }
+
         return setKeyframe(keys);
     }
 
@@ -178,17 +183,14 @@ export const TimelineForm = () => {
         });
     }
 
-    const sendSequence = () => {
+    const sendSequence = (keys: Keyframe[]) => {
         const cameraPosition: cameraPosition[] = [];
         const cameraRotation: cameraRotation[] = [];
 
-        keyframe.forEach((x) => {
+        keys.forEach((x) => {
             cameraPosition.push({ blend: "linear", time: x.time, value: x.cameraPosition });
             cameraRotation.push({ blend: "linear", time: x.time, value: x.cameraRotation });
         })
-
-        //console.log(cameraRotations);
-        //console.log(cameraPositions);
 
         const obj = {
             cameraPosition,
@@ -223,6 +225,7 @@ export const TimelineForm = () => {
         };
 
         window.ipcRenderer.send('post-sequence', obj);
+        setSequence(true);
     }
 
     const openEnvironment = () => {
@@ -254,9 +257,15 @@ export const TimelineForm = () => {
                             <Button onClick={() => { sendPlayback({ key: "time", value: timeline.time - 15 }) }}
                                 content={<IconRewindBackward15 className="stroke-gold4 w-4"></IconRewindBackward15>}
                                 tooltip={"Go back 15 seconds"} />
-                            <Button onClick={() => { sendSequence() }}
-                                content={<IconPlayerEject className="stroke-gold4 w-4"></IconPlayerEject>}
-                                tooltip={"Start sequence"} />
+
+                            {sequence ?
+                                (<Button onClick={() => { window.ipcRenderer.send('post-sequence', {}); setSequence(false); }}
+                                    content={<IconArrowUpFromArc className="stroke-gold4 w-4" />}
+                                    tooltip={"Unapply sequence"} />)
+                                :
+                                (<Button onClick={() => { sendSequence(keyframe); }}
+                                    content={<IconArrowDownFromArc className="stroke-gold4 w-4" />}
+                                    tooltip={"Apply sequence"} />)}
                         </div>
                         <div className="flex flex-row space-x-2 no-drag items-center">
                             <Button onClick={() => { sendPlayback({ key: "speed", value: Math.max(timeline.speed - 0.25, 0.25).toFixed(2) }) }} content={<IconMinus className="stroke-gold4 w-4"></IconMinus>} tooltip={"Go back 15 seconds"} />
@@ -321,7 +330,7 @@ export const TimelineForm = () => {
                                 <Button onClick={() => addKeyframe()} content={<IconKeyframe className="stroke-gold4 w-4"></IconKeyframe>} tooltip={"Add keyframe"} />
                                 <Button onClick={() => deleteKeyframe()} content={<IconVectorBezier2 className="stroke-gold4 w-4"></IconVectorBezier2>} tooltip={"Add curves to selected"} />
                                 <Button onClick={() => deleteKeyframe()} content={<IconSquareRoundedMinus className="stroke-gold4 w-4"></IconSquareRoundedMinus>} tooltip={"Clear selected keyframes"} />
-                                <Button onClick={() => {setKeyframe([]); window.ipcRenderer.send('post-sequence', {});}} content={<IconTrash className="stroke-gold4 w-4"></IconTrash>} tooltip={"Clear all keyframes"} />
+                                <Button onClick={() => { setKeyframe([]); window.ipcRenderer.send('post-sequence', {}); }} content={<IconTrash className="stroke-gold4 w-4"></IconTrash>} tooltip={"Clear all keyframes"} />
                             </span>
                             <span className="space-x-4 flex flex-row">
                                 <Button onClick={openEnvironment} content={<IconEyeCog className="stroke-gold4 w-4"></IconEyeCog>} tooltip={"Environment settings"} />
