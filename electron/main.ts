@@ -62,14 +62,14 @@ function createWindow() {
     }
 }
 
-let secondWindow: BrowserWindow | null;
+let environmentWindow: BrowserWindow | null;
 
-function createSecondWindow() {
-    if (secondWindow) {
+function createEnvironmentWindow() {
+    if (environmentWindow) {
         return;
     }
 
-    secondWindow = new BrowserWindow({
+    environmentWindow = new BrowserWindow({
         width: 600,
         height: 400,
         frame: false,
@@ -81,21 +81,21 @@ function createSecondWindow() {
         }
     });
 
-    secondWindow.setAlwaysOnTop(true, "screen-saver",1);
+    environmentWindow.setAlwaysOnTop(true, "screen-saver",1);
 
     if (VITE_DEV_SERVER_URL) {
-        secondWindow.loadURL(VITE_DEV_SERVER_URL)
+        environmentWindow.loadURL(VITE_DEV_SERVER_URL)
     } else {
         // win.loadFile('dist/index.html')
-        secondWindow.loadFile(path.join(RENDERER_DIST, 'index.html/#/render'))
+        environmentWindow.loadFile(path.join(RENDERER_DIST, 'index.html/#/render'))
     }
 
-    secondWindow.on('closed', () => {
-        secondWindow = null;
+    environmentWindow.on('closed', () => {
+        environmentWindow = null;
     });
 
-    secondWindow.webContents.on('did-finish-load', () => {
-        secondWindow?.webContents.executeJavaScript(`
+    environmentWindow.webContents.on('did-finish-load', () => {
+        environmentWindow?.webContents.executeJavaScript(`
             window.location.hash = '#/render';
         `);
     });
@@ -149,12 +149,16 @@ ipcMain.on('open-visibility', (event, arg) => {
     }
 });
 
-ipcMain.on('open-second-window', (event, arg) => {
-    if (secondWindow != null) {
-        secondWindow.show();
+ipcMain.on('open-environment', (event, arg) => {
+    if (environmentWindow != null) {
+        environmentWindow.show();
     } else {
-        createSecondWindow();
+        createEnvironmentWindow();
     }
+});
+
+ipcMain.on('close-environment', (event, arg) => {
+    environmentWindow?.close();
 });
 
 ipcMain.on('close-visibility', (event, arg) => {
@@ -163,7 +167,7 @@ ipcMain.on('close-visibility', (event, arg) => {
 
 ipcMain.on('minimize', (event, arg) => {
     win?.minimize();
-    secondWindow?.minimize();
+    environmentWindow?.minimize();
     visibilityWindow?.minimize();
 });
 
@@ -177,16 +181,28 @@ ipcMain.handle('post-timeline', (event, arg) => {
     postReq("https://127.0.0.1:2999/replay/playback", { [arg.key]: arg.value });
 });
 
+ipcMain.on('post-sequence', (event, arg) => {
+    //console.log('Received arg:', JSON.stringify(arg, null, 2));
+    postReq("https://127.0.0.1:2999/replay/sequence", arg);
+});
+
 ipcMain.handle('get-timeline', async (event, arg) => {
     const data: any = await getReq("https://127.0.0.1:2999/replay/playback");
     return data;
 });
 
 ipcMain.on('get-render', async (event, arg) => {
-    console.log("get render called");
+    console.log("get render2 called");
     const data: any = await getReq("https://127.0.0.1:2999/replay/render");
     //console.log(data);
     event.reply('main-get-render', data);
+});
+
+ipcMain.handle('get-render', async (event, arg) => {
+    console.log("get render 3called");
+    const data: any = await getReq("https://127.0.0.1:2999/replay/render");
+    //console.log(data);
+    return data;
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

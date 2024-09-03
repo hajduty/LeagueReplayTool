@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { Keyframe, vec3 } from "../Models/Keyframe";
+import { cameraPosition, cameraRotation, Keyframe, vec3 } from "../Models/Keyframe";
 import { KeyframeForm } from "../Shared/Keyframe";
 import KeyframeIcon from "../Shared/KeyframeIcon";
-import { IconArrowBack, IconEyeCog, IconKey, IconKeyframe, IconKeyframeAlignCenter, IconKeyframes, IconMinimize, IconPlayerPlay, IconRewindBackward15, IconScanEye, IconSquareRoundedMinus, IconTrash, IconVectorBezier2, IconWindowMinimize } from "@tabler/icons-react";
+import { IconArrowBack, IconEyeCog, IconKey, IconKeyframe, IconKeyframeAlignCenter, IconKeyframes, IconMinimize, IconMinus, IconPlayerEject, IconPlayerPause, IconPlayerPlay, IconPlus, IconRewindBackward15, IconScanEye, IconSquareRoundedMinus, IconTrash, IconVectorBezier2, IconWindowMinimize } from "@tabler/icons-react";
 import Tooltip from "../Shared/Tooltip";
 import { Button } from "../Shared/Button";
 import { Timeline } from "../Models/Timeline";
+import { Slider } from "@mui/material";
+import { Render } from "../Models/Render";
 
 const defaultState = {
     length: 1000,
@@ -17,6 +19,7 @@ const defaultState = {
 
 export const TimelineForm = () => {
     const [timeline, setTimeline] = useState<Timeline>(defaultState);
+    const [render, setRender] = useState<Render>();
     const [zoom, setZoom] = useState(1);
     const [cursorTime, setCursorTime] = useState(100);
     const [hoverTime, setHoverTime] = useState(100);
@@ -64,7 +67,7 @@ export const TimelineForm = () => {
             });
         };
 
-        const intervalId = setInterval(fetchData, 1000);
+        const intervalId = setInterval(fetchData, 500);
 
         return () => clearInterval(intervalId);
     }, [pending]);
@@ -121,10 +124,15 @@ export const TimelineForm = () => {
 
     const addKeyframe = () => {
         const cam: vec3 = { x: 0, y: 0, z: 0 };
-        const newKeyframe: Keyframe = { blend: "linear", time: cursorTime, value: cam, id: Math.random().toString(36) };
 
-        setKeyframe([...keyframe, newKeyframe]);
-        console.log(keyframe);
+        window.ipcRenderer.invoke('get-render').then((newData) => {
+            setRender(newData);
+            const cameraPosition: vec3 = newData.cameraPosition;
+            const cameraRotation: vec3 = newData.cameraRotation;
+            const newKeyframe: Keyframe = { time: cursorTime, id: Math.random().toString(36), show: true, cameraPosition, cameraRotation };
+            setKeyframe([...keyframe, newKeyframe]);
+            console.log(newKeyframe);
+        });
     }
 
     const deleteKeyframe = () => {
@@ -160,8 +168,65 @@ export const TimelineForm = () => {
         return setKeyframe(keys);
     }
 
-    const openSecondWindow = () => {
-        window.ipcRenderer.send('open-second-window');
+    const sendPlayback = (data: any) => {
+        setPending(true);
+
+        setTimeline({ ...timeline, [data.key]: data.value });
+
+        window.ipcRenderer.invoke('post-timeline', { key: data.key, value: data.value }).finally(() => {
+            setPending(false);
+        });
+    }
+
+    const sendSequence = () => {
+        const cameraPosition: cameraPosition[] = [];
+        const cameraRotation: cameraRotation[] = [];
+
+        keyframe.forEach((x) => {
+            cameraPosition.push({ blend: "linear", time: x.time, value: x.cameraPosition });
+            cameraRotation.push({ blend: "linear", time: x.time, value: x.cameraRotation });
+        })
+
+        //console.log(cameraRotations);
+        //console.log(cameraPositions);
+
+        const obj = {
+            cameraPosition,
+            cameraRotation,
+            depthFogColor: null,
+            depthFogEnabled: null,
+            depthFogEnd: null,
+            depthFogIntensity: null,
+            depthFogStart: null,
+            depthOfFieldCircle: null,
+            depthOfFieldEnabled: null,
+            depthOfFieldFar: null,
+            depthOfFieldMid: null,
+            depthOfFieldNear: null,
+            depthOfFieldWidth: null,
+            farClip: null,
+            fieldOfView: null,
+            heightFogColor: null,
+            heightFogEnabled: null,
+            heightFogEnd: null,
+            heightFogIntensity: null,
+            heightFogStart: null,
+            navGridOffset: null,
+            nearClip: null,
+            playbackSpeed: null,
+            selectionName: null,
+            selectionOffset: null,
+            skyboxOffset: null,
+            skyboxRadius: null,
+            skyboxRotation: null,
+            sunDirection: null
+        };
+
+        window.ipcRenderer.send('post-sequence', obj);
+    }
+
+    const openEnvironment = () => {
+        window.ipcRenderer.send('open-environment');
     };
 
     const openVisibility = () => {
@@ -173,14 +238,33 @@ export const TimelineForm = () => {
     };
 
     return (
-        <div className="p-1 drag-area bg-gradient-to-t from-gold6 to-gold5">
+        <div className="p-1 drag-area bg-gradient-to-br to-50% from-gold3 to-gold5">
             <div className="bg-mainbg p-1">
-                <div className="flex flex-row space-x-12 p-2 border-2 border-innerborder rounded-none bg-mainbg">
-                    <div className="flex flex-row space-x-2 no-drag">
-                        <Button onClick={() => { }} content={<IconPlayerPlay className="stroke-gold4 w-4"></IconPlayerPlay>} tooltip={"Start sequence"} />
-                        <Button onClick={() => { }} content={<IconRewindBackward15 className="stroke-gold4 w-4"></IconRewindBackward15>} tooltip={"Go back 15 seconds"} />
+                <div className="flex flex-row space-x-4 p-2 border-2 border-innerborder rounded-none bg-mainbg">
+                    <div className="flex flex-col gap-2 no-drag justify-between">
+                        <div className="flex flex-row space-x-2 no-drag">
+                            <Button onClick={() => { sendPlayback({ key: "paused", value: !timeline.paused }) }} content={
+                                timeline.paused ? (
+                                    <IconPlayerPlay className="stroke-gold4 w-4" />
+                                ) : (
+                                    <IconPlayerPause className="stroke-gold4 w-4" />
+                                )
+                            }
+                                tooltip={"Resume playback"} />
+                            <Button onClick={() => { sendPlayback({ key: "time", value: timeline.time - 15 }) }}
+                                content={<IconRewindBackward15 className="stroke-gold4 w-4"></IconRewindBackward15>}
+                                tooltip={"Go back 15 seconds"} />
+                            <Button onClick={() => { sendSequence() }}
+                                content={<IconPlayerEject className="stroke-gold4 w-4"></IconPlayerEject>}
+                                tooltip={"Start sequence"} />
+                        </div>
+                        <div className="flex flex-row space-x-2 no-drag items-center">
+                            <Button onClick={() => { sendPlayback({ key: "speed", value: Math.max(timeline.speed - 0.25, 0.25).toFixed(2) }) }} content={<IconMinus className="stroke-gold4 w-4"></IconMinus>} tooltip={"Go back 15 seconds"} />
+                            <Button onClick={() => { sendPlayback({ key: "speed", value: (timeline.speed + 0.25).toFixed(2) }) }} content={<IconPlus className="stroke-gold4 w-4"></IconPlus>} tooltip={"Go back 15 seconds"} />
+                            <p className="text-grey2 font-semibold text-xs select-none w-8">{timeline.speed}X</p>
+                        </div>
                     </div>
-                    <div className="flex flex-col grow space-y-2 no-drag">
+                    <div className="flex flex-col grow gap-2 justify-between no-drag">
                         <div className="w-auto overflow-x-scroll h-fit custom-scrollbar no-drag">
                             <div
                                 ref={timelineRef}
@@ -237,10 +321,10 @@ export const TimelineForm = () => {
                                 <Button onClick={() => addKeyframe()} content={<IconKeyframe className="stroke-gold4 w-4"></IconKeyframe>} tooltip={"Add keyframe"} />
                                 <Button onClick={() => deleteKeyframe()} content={<IconVectorBezier2 className="stroke-gold4 w-4"></IconVectorBezier2>} tooltip={"Add curves to selected"} />
                                 <Button onClick={() => deleteKeyframe()} content={<IconSquareRoundedMinus className="stroke-gold4 w-4"></IconSquareRoundedMinus>} tooltip={"Clear selected keyframes"} />
-                                <Button onClick={() => setKeyframe([])} content={<IconTrash className="stroke-gold4 w-4"></IconTrash>} tooltip={"Clear all keyframes"} />
+                                <Button onClick={() => {setKeyframe([]); window.ipcRenderer.send('post-sequence', {});}} content={<IconTrash className="stroke-gold4 w-4"></IconTrash>} tooltip={"Clear all keyframes"} />
                             </span>
                             <span className="space-x-4 flex flex-row">
-                                <Button onClick={openSecondWindow} content={<IconEyeCog className="stroke-gold4 w-4"></IconEyeCog>} tooltip={"Environment settings"} />
+                                <Button onClick={openEnvironment} content={<IconEyeCog className="stroke-gold4 w-4"></IconEyeCog>} tooltip={"Environment settings"} />
                                 <Button onClick={openVisibility} content={<IconScanEye className="stroke-gold4 w-4"></IconScanEye>} tooltip={"Visibility settings"} />
                                 <Button onClick={minimizeWindow} content={<IconKeyframeAlignCenter className="stroke-gold4 w-4"></IconKeyframeAlignCenter>} tooltip={"Keyframe settings"} />
                             </span>

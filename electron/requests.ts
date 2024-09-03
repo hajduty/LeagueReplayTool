@@ -1,5 +1,4 @@
 import axios from "axios";
-import { StartLoggingOptions } from "electron/main";
 import https from "https";
 
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
@@ -15,11 +14,11 @@ export const postReq = async (url: string, data: any) => {
                 'Content-Type': 'application/json',
             },
         });
-        console.log(data);
+        //console.log(data);
         //console.log({ [data.key]: data.value });
-        console.log(response.status);
-        console.log(response.statusText);
-        console.log(response.data);
+        //console.log(response.status);
+        //console.log(response.statusText);
+        console.log(data);
         return response.data;
     }
     catch(e) {

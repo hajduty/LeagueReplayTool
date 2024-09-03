@@ -72,11 +72,15 @@ export const RenderForm = () => {
         setRender(updatedRender);
     };
 
+    const closeWindow = () => {
+        window.ipcRenderer.send('close-environment');
+    };
+
     return (
         <>
             <div className="bg-gradient-to-t from-gold6 to-gold5 flex flex-col h-screen w-screen p-1">
                 <div className="bg-gold5 flex h-2 drag-area justify-end items-center m-0.5">
-                    <button className="text-sm font-bold focus:outline-none select-none no-drag text-blue6" onClick={() => {}}>
+                    <button className="text-sm font-bold focus:outline-none select-none no-drag text-blue6" onClick={() => closeWindow()}>
                         X
                     </button>
                 </div>

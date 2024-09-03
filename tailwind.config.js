@@ -16,6 +16,7 @@ export default {
         grey1: "#A09B8C", 
         grey2: "#5B5A56",
         grey3: "#1E2328",
+        gold3: "#C8AA6E",
         gold5: "#785A28",
         gold6: "#463714",
         gold7: "#32281E",
