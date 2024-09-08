@@ -1,25 +1,48 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cameraPosition, cameraRotation, Keyframe, vec3 } from "../Models/Keyframe";
-import { KeyframeForm } from "../Shared/Keyframe";
 import KeyframeIcon from "../Shared/KeyframeIcon";
-import { IconArrowBack, IconArrowBackUp, IconArrowBackUpDouble, IconArrowDownFromArc, IconArrowUpFromArc, IconEyeCog, IconKey, IconKeyframe, IconKeyframeAlignCenter, IconKeyframes, IconMinimize, IconMinus, IconPlayerEject, IconPlayerPause, IconPlayerPlay, IconPlus, IconRewindBackward15, IconScanEye, IconSquareRoundedMinus, IconTrash, IconVectorBezier2, IconWindowMinimize } from "@tabler/icons-react";
-import Tooltip from "../Shared/Tooltip";
+import { IconArrowDownFromArc, IconArrowUpFromArc, IconEyeCog, IconKeyframe, IconKeyframeAlignCenter, IconMinus, IconPlayerPause, IconPlayerPlay, IconPlus, IconRewindBackward15, IconScanEye, IconSquareRoundedMinus, IconTrash, IconVectorBezier2, IconWindowMinimize } from "@tabler/icons-react";
 import { Button } from "../Shared/Button";
-import { Timeline } from "../Models/Timeline";
-import { Slider } from "@mui/material";
-import { Render } from "../Models/Render";
+import { defaultSequence, defaultState, Timeline } from "../Models/Timeline";
 
-const defaultState = {
-    length: 1000,
-    paused: false,
-    seeking: false,
-    speed: 1.0,
-    time: 100,
-}
+const getPosition = (time: number, timeline: Timeline) => {
+    if (time > timeline.length)
+        return timeline.length;
+    return `${Math.min(time / timeline.length) * 100}%`;
+};
+
+const generateTimeMarkers = (timeline: Timeline, zoom: number) => {
+    const markers = [];
+    const div = zoom > 2 ? 45 : 25;
+    const interval = (timeline.length / zoom) / div; // 100 markers
+    for (let i = 0; i <= timeline.length; i += interval) {
+        markers.push(i);
+    }
+    return markers;
+};
+
+const handleDragStart = (e: any) => {
+    // Create an empty or transparent image
+    const img = new Image();
+    img.src = ''; // An empty or transparent image
+    e.dataTransfer.setDragImage(img, 0, 0); // Set the custom drag image
+};
+
+const openEnvironment = () => {
+    window.ipcRenderer.send('open-environment');
+};
+
+const openVisibility = () => {
+    window.ipcRenderer.send('open-visibility');
+};
+
+const minimizeWindow = () => {
+    window.ipcRenderer.send('minimize');
+};
 
 export const TimelineForm = () => {
+    const [visibleTimeRange, setVisibleTimeRange] = useState({ startTime: 0, endTime: 0 });
     const [timeline, setTimeline] = useState<Timeline>(defaultState);
-    const [render, setRender] = useState<Render>();
     const [zoom, setZoom] = useState(1);
     const [cursorTime, setCursorTime] = useState(100);
     const [hoverTime, setHoverTime] = useState(100);
@@ -27,34 +50,58 @@ export const TimelineForm = () => {
     const [selectedKeyframe, setSelectedKeyframe] = useState<Keyframe>();
     const [pending, setPending] = useState<Boolean>(false);
     const [sequence, setSequence] = useState<Boolean>(false);
-    const timelineRef = useRef(null);
-    //const startTime = 0;
-    //const endTime = 2500; // Updated end time
-    // const timelineLength = endTime - startTime;
+
+    const timelineRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        const handleScroll = (e: any) => {
+        const handleScroll = (e: WheelEvent) => {
             if (e.ctrlKey) {
                 e.preventDefault();
-                if (e.deltaY > 0) {
-                    handleZoomOut();
-                } else {
-                    handleZoomIn();
+
+                const timelineElement = timelineRef.current;
+                const scrollableElement = timelineElement?.parentElement;
+
+                if (scrollableElement && timelineElement) {
+                    const rect = timelineElement.getBoundingClientRect();
+                    const previousWidth = rect.width;
+                    const scrollLeft = scrollableElement.scrollLeft;
+
+                    const cursorPosition = (cursorTime / timeline.length) * previousWidth;
+                    const cursorRelativeToScroll = cursorPosition - scrollLeft;
+
+                    let newZoom;
+                    if (e.deltaY > 0) {
+                        newZoom = Math.max(zoom - 1, 0.99);
+                    } else {
+                        newZoom = Math.min(zoom + 1, 100);
+                    }
+                    setZoom(newZoom);
+
+                    setTimeout(() => {
+                        const newTimelineWidth = timelineElement.getBoundingClientRect().width;
+                        const newCursorPosition = (cursorTime / timeline.length) * newTimelineWidth;
+                        const newScrollLeft = newCursorPosition - cursorRelativeToScroll;
+
+                        scrollableElement.scrollLeft = Math.max(0, newScrollLeft);
+                    }, 0);
                 }
             }
         };
 
-        const timelineElement: any = timelineRef.current;
-        if (timelineElement) {
-            timelineElement.addEventListener('wheel', handleScroll);
+        const timelineElement = timelineRef.current;
+        const scrollableElement = timelineElement?.parentElement;
+
+        if (scrollableElement) {
+            scrollableElement.addEventListener('wheel', handleScroll);
         }
 
         return () => {
-            if (timelineElement) {
-                timelineElement.removeEventListener('wheel', handleScroll);
+            if (scrollableElement) {
+                scrollableElement.removeEventListener('wheel', handleScroll);
             }
         };
-    }, []);
+    }, [cursorTime, timeline.length, zoom]);
+
 
     useEffect(() => {
         const fetchData = () => {
@@ -73,14 +120,6 @@ export const TimelineForm = () => {
         return () => clearInterval(intervalId);
     }, [pending]);
 
-    const handleZoomIn = () => {
-        setZoom(prevZoom => Math.min(prevZoom + 0.25, 50));
-    };
-
-    const handleZoomOut = () => {
-        setZoom(prevZoom => Math.max(prevZoom - 0.25, 0.99));
-    };
-
     const handleTimelineHover = (e: any) => {
         const timelineElement: any = timelineRef.current;
         if (timelineElement) {
@@ -95,39 +134,18 @@ export const TimelineForm = () => {
         setPending(true);
         window.addEventListener('mouseup', handleMouseUp);
         setCursorTime(hoverTime);
-        const data = { time: hoverTime, seeking: true };
 
         window.ipcRenderer.invoke('post-timeline', { key: "time", value: hoverTime }).finally(() => {
             setPending(false);
         });
-        //{ key, value: !visibility[key] }
     };
 
     const handleMouseUp = () => {
         window.removeEventListener('mouseup', handleMouseUp);
     };
 
-    const getPosition = (time: number) => {
-        //return `${Math.min(((time / timelineLength) * 100)), ((endTime / timelineLength) * 100)}%`;
-        if (time > timeline.length)
-            return timeline.length;
-        return `${Math.min(time / timeline.length) * 100}%`;
-    };
-
-    const generateTimeMarkers = () => {
-        const markers = [];
-        const interval = timeline.length / 50; // 100 markers
-        for (let i = 0; i <= timeline.length; i += interval) {
-            markers.push(i);
-        }
-        return markers;
-    };
-
     const addKeyframe = () => {
-        const cam: vec3 = { x: 0, y: 0, z: 0 };
-
         window.ipcRenderer.invoke('get-render').then((newData) => {
-            setRender(newData);
             const cameraPosition: vec3 = newData.cameraPosition;
             const cameraRotation: vec3 = newData.cameraRotation;
             const newKeyframe: Keyframe = { time: cursorTime, id: Math.random().toString(36), show: true, cameraPosition, cameraRotation };
@@ -140,13 +158,6 @@ export const TimelineForm = () => {
         const updatedKeyframes = keyframe.filter(x => !x.clicked);
         return setKeyframe(updatedKeyframes);
     }
-
-    const handleDragStart = (e: any) => {
-        // Create an empty or transparent image
-        const img = new Image();
-        img.src = ''; // An empty or transparent image
-        e.dataTransfer.setDragImage(img, 0, 0); // Set the custom drag image
-    };
 
     const dragKeyframe = (e: any, key: Keyframe) => {
         e.preventDefault();
@@ -192,53 +203,17 @@ export const TimelineForm = () => {
             cameraRotation.push({ blend: "linear", time: x.time, value: x.cameraRotation });
         })
 
-        const obj = {
-            cameraPosition,
-            cameraRotation,
-            depthFogColor: null,
-            depthFogEnabled: null,
-            depthFogEnd: null,
-            depthFogIntensity: null,
-            depthFogStart: null,
-            depthOfFieldCircle: null,
-            depthOfFieldEnabled: null,
-            depthOfFieldFar: null,
-            depthOfFieldMid: null,
-            depthOfFieldNear: null,
-            depthOfFieldWidth: null,
-            farClip: null,
-            fieldOfView: null,
-            heightFogColor: null,
-            heightFogEnabled: null,
-            heightFogEnd: null,
-            heightFogIntensity: null,
-            heightFogStart: null,
-            navGridOffset: null,
-            nearClip: null,
-            playbackSpeed: null,
-            selectionName: null,
-            selectionOffset: null,
-            skyboxOffset: null,
-            skyboxRadius: null,
-            skyboxRotation: null,
-            sunDirection: null
-        };
+        const sequence: any = defaultSequence;
+        sequence.cameraPosition = cameraPosition;
+        sequence.cameraRotation = cameraRotation;
 
-        window.ipcRenderer.send('post-sequence', obj);
+        window.ipcRenderer.send('post-sequence', sequence);
         setSequence(true);
     }
 
-    const openEnvironment = () => {
-        window.ipcRenderer.send('open-environment');
-    };
-
-    const openVisibility = () => {
-        window.ipcRenderer.send('open-visibility');
-    };
-
-    const minimizeWindow = () => {
-        window.ipcRenderer.send('minimize');
-    };
+    const markers = useMemo(() => {
+        return generateTimeMarkers(timeline, zoom);
+    }, [timeline, zoom]);
 
     return (
         <div className="p-1 drag-area bg-gradient-to-br to-50% from-gold3 to-gold5">
@@ -283,9 +258,9 @@ export const TimelineForm = () => {
                                 onMouseMove={handleTimelineHover}
                             >
                                 {/* time markers */}
-                                {generateTimeMarkers().map((time, index) => (
+                                {markers.map((time, index) => (
                                     <div className="flex flex-col absolute transform"
-                                        style={{ left: getPosition(time) }}>
+                                        style={{ left: getPosition(time, timeline) }}>
                                         <span
                                             key={index}
                                             className="absolute transform translate-y-3/4 op-0 h-8 border-r border-gray-400"
@@ -295,13 +270,14 @@ export const TimelineForm = () => {
                                     </div>
                                 ))}
 
+
                                 <div className="absolute top-1/2 transform -translate-y-1/2 bg-gold4 w-0.5 h-8 flex items-center justify-center text-white"
-                                    style={{ left: getPosition(cursorTime) }}
+                                    style={{ left: getPosition(cursorTime, timeline) }}
                                 >
                                 </div>
 
                                 <div className="absolute top-1/2 transform -translate-y-1/2 bg-gold6 w-0.5 h-8 flex items-center justify-center text-white"
-                                    style={{ left: getPosition(hoverTime) }}
+                                    style={{ left: getPosition(hoverTime, timeline) }}
                                 >
                                 </div>
 
@@ -311,7 +287,7 @@ export const TimelineForm = () => {
                                         onDragStart={handleDragStart}
                                         onDrag={(e) => { dragKeyframe(e, x) }} key={x.id}
                                         className="absolute top-1/2 transform -translate-y-1/2 -mx-3 cursor-pointer"
-                                        style={{ left: getPosition(x.time) }}
+                                        style={{ left: getPosition(x.time, timeline) }}
                                     >
                                         <KeyframeIcon style={{ fill: x.clicked ? "#742a2a" : "none" }}
                                             className={` ${!x.clicked ? 'shadow-none' : 'shadow-lg'}`}
