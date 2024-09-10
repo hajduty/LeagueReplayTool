@@ -9,14 +9,14 @@ export const VisibilityForm = () => {
 
     useEffect(() => {
         window.ipcRenderer.send('get-render');
-    },[])
+    }, [])
 
     const handleToggleChange = async (key: keyof Render) => {
         setVisibility({
             ...visibility,
             [key]: !visibility[key],
         });
-        
+
         window.ipcRenderer.send('post-render', { key, value: !visibility[key] });
     };
 
@@ -35,7 +35,7 @@ export const VisibilityForm = () => {
         //console.log('Message received from main process:', data);
         setVisibility(data);
     });
-    
+
     return (
         <>
             <div className="bg-gradient-to-t from-gold6 to-gold5 flex flex-col h-screen w-screen p-1">

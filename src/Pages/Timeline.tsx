@@ -270,7 +270,6 @@ export const TimelineForm = () => {
                                     </div>
                                 ))}
 
-
                                 <div className="absolute top-1/2 transform -translate-y-1/2 bg-gold4 w-0.5 h-8 flex items-center justify-center text-white"
                                     style={{ left: getPosition(cursorTime, timeline) }}
                                 >

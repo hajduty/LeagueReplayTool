@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RenderSettings } from "./RenderSettings"
 import { Render } from "../Models/Render";
 
@@ -66,12 +66,6 @@ export const initialRenderState = {
 };
 
 export const RenderForm = () => {
-    const [render, setRender] = useState<Render>(initialRenderState);
-
-    const handleUpdateRender = (updatedRender: Render) => {
-        setRender(updatedRender);
-    };
-
     const closeWindow = () => {
         window.ipcRenderer.send('close-environment');
     };
@@ -87,7 +81,7 @@ export const RenderForm = () => {
 
                 <div className="text-grey2 bg-mainbg flex-1 overflow-auto p-1">
                     <div className="text-grey2 bg-mainbg border-2 border-innerborder h-full p-1 no-drag overflow-x-hidden overflow-y-auto custom-scrollbar flex flex-row">
-                        <RenderSettings render={render} onUpdate={handleUpdateRender} />
+                        <RenderSettings/>
                     </div>
                 </div>
             </div>
