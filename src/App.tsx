@@ -1,5 +1,5 @@
 import './App.css'
-import { TimelineForm } from './Pages/Timeline'
+import { TimelineForm } from './Pages/Timeline/Timeline'
 
 function App() {
   return (

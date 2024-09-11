@@ -1,9 +1,9 @@
 export interface Timeline {
-    length: number,
-    paused: boolean,
-    seeking: boolean,
-    speed: number,
-    time: number,
+	length: number,
+	paused: boolean,
+	seeking: boolean,
+	speed: number,
+	time: number,
 }
 
 export const defaultState = {
