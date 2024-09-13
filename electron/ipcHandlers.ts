@@ -3,6 +3,7 @@ import { postReq, getReq } from './requests';
 import { createVisibilityWindow, visibilityWindow } from './windows/visibilityWindow';
 import { createEnvironmentWindow, environmentWindow } from './windows/environmentWindow';
 import { createMainWindow, mainWindow } from './windows/mainWindow';
+import { createKeybindWindow, keybindWindow } from './windows/keybindWindow';
 
 ipcMain.on('open-visibility', (event, arg) => {
     if (visibilityWindow != null) {
@@ -20,6 +21,14 @@ ipcMain.on('open-environment', (event, arg) => {
     }
 });
 
+ipcMain.on('open-keybinds', (event, arg) => {
+    if (keybindWindow != null) {
+        keybindWindow.show();
+    } else {
+        createKeybindWindow();
+    }
+});
+
 ipcMain.on('minimize', (event, arg) => {
     environmentWindow?.minimize();
     mainWindow?.minimize();
@@ -32,6 +41,10 @@ ipcMain.on('close-environment', (event, arg) => {
 
 ipcMain.on('close-visibility', (event, arg) => {
     visibilityWindow?.close();
+});
+
+ipcMain.on('close-keybinds', (event, arg) => {
+    keybindWindow?.close();
 });
 
 ipcMain.on('post-render', (event, arg) => {

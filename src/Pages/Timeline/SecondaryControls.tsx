@@ -1,4 +1,4 @@
-import { IconKeyframe, IconVectorBezier2, IconSquareRoundedMinus, IconTrash, IconEyeCog, IconScanEye, IconKeyframeAlignCenter, IconWindowMinimize } from "@tabler/icons-react";
+import { IconKeyframe, IconVectorBezier2, IconSquareRoundedMinus, IconTrash, IconEyeCog, IconScanEye, IconKeyframeAlignCenter, IconWindowMinimize, IconKeyboard } from "@tabler/icons-react";
 import { Button } from "../../Shared/Button";
 
 const openEnvironment = () => {
@@ -8,6 +8,10 @@ const openEnvironment = () => {
 const openVisibility = () => {
 	window.ipcRenderer.send('open-visibility');
 };
+
+const openKeybinds = () => {
+	window.ipcRenderer.send('open-keybinds');
+}
 
 const minimizeWindow = () => {
 	window.ipcRenderer.send('minimize');
@@ -26,6 +30,7 @@ export const SecondaryControls = ({ addKeyframe, deleteKeyframe, setKeyframe }: 
 				<span className="space-x-4 flex flex-row">
 					<Button onClick={openEnvironment} content={<IconEyeCog className="stroke-gold4 w-4"></IconEyeCog>} tooltip={"Environment settings"} />
 					<Button onClick={openVisibility} content={<IconScanEye className="stroke-gold4 w-4"></IconScanEye>} tooltip={"Visibility settings"} />
+					<Button onClick={openKeybinds} content={<IconKeyboard className="stroke-gold4 w-4"></IconKeyboard>} tooltip={"Keybinds settings"} />
 					<Button onClick={minimizeWindow} content={<IconKeyframeAlignCenter className="stroke-gold4 w-4"></IconKeyframeAlignCenter>} tooltip={"Keyframe settings"} />
 				</span>
 				<Button onClick={minimizeWindow} content={<IconWindowMinimize className="stroke-gold4 w-4"></IconWindowMinimize>} tooltip={"Minimize window"} />
