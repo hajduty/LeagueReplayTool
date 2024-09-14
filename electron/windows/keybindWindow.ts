@@ -33,6 +33,7 @@ export function createKeybindWindow() {
 			window.location.hash = '#/keybind';
 		`);
 	});
+	
 	keybindWindow.on('closed', () => {
 		keybindWindow = null;
 	});

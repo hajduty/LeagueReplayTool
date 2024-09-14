@@ -1,11 +1,12 @@
+import { useEffect, useState } from "react";
 
 type Props = {}
 
 export const KeybindsForm = (props: Props) => {
 
   const closeWindow = () => {
-		window.ipcRenderer.send('close-keybinds');
-	};
+    window.ipcRenderer.send("close-keybinds");
+  }
 
   return (
     <>

@@ -2,6 +2,7 @@ import { BrowserWindow } from 'electron';
 import { RENDERER_DIST } from '../main';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { registerKeybinds } from '../store';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -41,4 +42,7 @@ export function createMainWindow() {
 	} else {
 		console.error("Error: VITE_DEV_SERVER_URL and RENDERER_DIST are undefined");
 	}
+
+	registerKeybinds(mainWindow);
+
 }
