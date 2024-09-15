@@ -11,15 +11,18 @@ export interface Keybind {
   bind: string;
 }
 
-export const defaultKeybinds: Keybind[] = [
+const defaultKeybinds: Keybind[] = [
   { key: "minimize", action: "Minimize Windows", bind: "Ctrl+Shift+M" },
   { key: "open-visibility", action: "Open Visibility Window", bind: "Ctrl+Shift+V" },
   { key: "open-environment", action: "Open Environment Window", bind: "Ctrl+Shift+E" },
   { key: "open-keybinds", action: "Open Keybinds Window", bind: "Ctrl+Shift+K" },
 ];
-
 export function registerKeybinds(mainWindow: BrowserWindow) {
   const keybinds = store.get("keybinds", defaultKeybinds) as Keybind[];
+
+  if (!keybinds.length) { 
+    store.set("keybinds", defaultKeybinds);
+  }
 
   keybinds.forEach((keybind) => {
     if (keybind.bind) {
@@ -30,7 +33,6 @@ export function registerKeybinds(mainWindow: BrowserWindow) {
     }
   });
 }
-
 ipcMain.handle("update-keybinds", (event, newKeybinds) => {
   store.set("keybinds", newKeybinds);
   globalShortcut.unregisterAll();
@@ -39,6 +41,6 @@ ipcMain.handle("update-keybinds", (event, newKeybinds) => {
   });
 })
 
-ipcMain.handle("get-keybinds", () => {
+ipcMain.handle("get-keybinds", async () => {
   return store.get("keybinds", defaultKeybinds);
 });
