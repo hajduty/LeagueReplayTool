@@ -2,7 +2,7 @@ import { BrowserWindow } from 'electron';
 import { RENDERER_DIST } from '../main';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { registerKeybinds } from '../store';
+import { registerKeybinds } from '../keybinds/store';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -19,9 +19,9 @@ export function createMainWindow() {
 		},
 		frame: false,
 		width: 900,
-		height: 110,
-		minHeight: 110,
-		maxHeight: 110,
+		height: 500,
+		minHeight: 500,
+		maxHeight: 500,
 		resizable: true,
 		backgroundColor: "#081110",
 		thickFrame: false,
@@ -44,5 +44,8 @@ export function createMainWindow() {
 	}
 
 	registerKeybinds(mainWindow);
+
+	// devtools
+	mainWindow.webContents.openDevTools();
 
 }

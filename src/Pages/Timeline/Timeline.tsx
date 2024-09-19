@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cameraPosition, cameraRotation, Keyframe, vec3 } from "../../Models/Keyframe";
 import KeyframeIcon from "../../Shared/KeyframeIcon";
 import { defaultSequence, defaultState, Timeline } from "../../Models/Timeline";
@@ -131,17 +131,23 @@ export const TimelineForm = () => {
 		window.removeEventListener('mouseup', handleMouseUp);
 	};
 
-	const addKeyframe = () => {
+	const addKeyframe = useCallback(() => {
 		window.ipcRenderer.invoke('get-render').then((newData) => {
-			const newKeyframe: Keyframe = { time: cursorTime, id: Math.random().toString(36), show: true, cameraPosition: newData.cameraPosition, cameraRotation: newData.cameraRotation };
+			const newKeyframe = {
+				time: cursorTime,
+				id: Math.random().toString(36),
+				show: true,
+				cameraPosition: newData.cameraPosition,
+				cameraRotation: newData.cameraRotation
+			};
 			setKeyframe([...keyframe, newKeyframe]);
 		});
-	}
+	}, [cursorTime, keyframe]);
 
-	const deleteKeyframe = () => {
+	const deleteKeyframe = useCallback(() => {
 		const updatedKeyframes = keyframe.filter(x => !x.clicked);
 		return setKeyframe(updatedKeyframes);
-	}
+	}, [keyframe]);
 
 	const dragKeyframe = (e: any, key: Keyframe) => {
 		e.preventDefault();

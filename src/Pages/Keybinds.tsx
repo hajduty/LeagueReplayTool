@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Keybind } from "../../electron/store";
 import hotkeys from "hotkeys-js";
+import { Keybind } from "../../electron/keybinds/types";
 
 export const KeybindsForm: React.FC = () => {
   const [keybinds, setKeybinds] = useState<Keybind[]>([]);
@@ -61,7 +61,7 @@ export const KeybindsForm: React.FC = () => {
 
     const handleKeyup = () => {
       if (editingKeybind) {
-        const isDuplicate = keybinds.some((kb) => kb.bind === currentKeybind && kb.key !== editingKeybind.key);
+        const isDuplicate = keybinds.some((kb) => kb.bind === currentKeybind && kb.channel !== editingKeybind.channel);
     
         if (isDuplicate) {
           console.error("Duplicate keybinding detected.");
@@ -70,7 +70,7 @@ export const KeybindsForm: React.FC = () => {
         }
     
         const updatedKeybinds = keybinds.map((kb) =>
-          kb.key === editingKeybind.key ? { ...kb, bind: currentKeybind } : kb
+          kb.channel === editingKeybind.channel ? { ...kb, bind: currentKeybind } : kb
         );
     
         hotkeys.unbind(editingKeybind.bind);
@@ -122,19 +122,19 @@ export const KeybindsForm: React.FC = () => {
           <div className="flex-grow space-y-2">
             {keybinds.map((keybind) => (
               <div
-                key={keybind.key}
+                key={keybind.channel}
                 className="flex flex-row justify-between items-center p-2 border-b border-innerborder"
               >
                 <span>{keybind.action}</span>
                 <button
                   onClick={() => handleEditClick(keybind)}
                   className={`w-40 p-2 border border-innerborder rounded-sm transition-colors ${
-                    editingKeybind?.key === keybind.key
+                    editingKeybind?.channel === keybind.channel
                       ? 'bg-cyan-600 text-white'
                       : 'bg-gold5 text-[#081110]'
                   } hover:bg-cyan-700 hover:border-cyan-800`}
                 >
-                  {editingKeybind?.key === keybind.key
+                  {editingKeybind?.channel === keybind.channel
                     ? "Press a key..."
                     : keybind.bind}
                 </button>

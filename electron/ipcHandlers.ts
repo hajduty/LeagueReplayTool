@@ -2,8 +2,9 @@ import { ipcMain } from 'electron';
 import { postReq, getReq } from './requests';
 import { createVisibilityWindow, visibilityWindow } from './windows/visibilityWindow';
 import { createEnvironmentWindow, environmentWindow } from './windows/environmentWindow';
-import { createMainWindow, mainWindow } from './windows/mainWindow';
+import { mainWindow } from './windows/mainWindow';
 import { createKeybindWindow, keybindWindow } from './windows/keybindWindow';
+import { getKeybindMap, reloadKeybinds, updateKeybinds } from './keybinds/store';
 
 ipcMain.on('open-visibility', (event, arg) => {
     if (visibilityWindow != null) {
@@ -75,4 +76,13 @@ ipcMain.handle('get-render', async (event, arg) => {
     console.log("get render 3called");
     const data: any = await getReq("https://127.0.0.1:2999/replay/render");
     return data;
+});
+
+ipcMain.handle("update-keybinds", (event, newKeybinds) => {
+    updateKeybinds(newKeybinds);
+    reloadKeybinds();
+  });
+  
+ipcMain.handle("get-keybinds", async () => {
+    return Array.from(getKeybindMap().values());
 });

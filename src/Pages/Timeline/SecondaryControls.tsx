@@ -1,5 +1,8 @@
 import { IconKeyframe, IconVectorBezier2, IconSquareRoundedMinus, IconTrash, IconEyeCog, IconScanEye, IconKeyframeAlignCenter, IconWindowMinimize, IconKeyboard } from "@tabler/icons-react";
 import { Button } from "../../Shared/Button";
+import { useMemo } from "react";
+import useKeybinds from "../../hooks/useKeybinds";
+import { KeybindChannels } from "../../../electron/keybinds/types";
 
 const openEnvironment = () => {
 	window.ipcRenderer.send('open-environment');
@@ -17,7 +20,19 @@ const minimizeWindow = () => {
 	window.ipcRenderer.send('minimize');
 };
 
-export const SecondaryControls = ({ addKeyframe, deleteKeyframe, setKeyframe }: any) => {
+export const SecondaryControls = ({ addKeyframe, deleteKeyframe, setKeyframe }: any) => {	
+
+ 	const keybinds = useMemo(() => ({
+		[KeybindChannels.OPEN_ENVIRONMENT]: openEnvironment,
+		[KeybindChannels.OPEN_VISIBILITY]: openVisibility,
+		[KeybindChannels.OPEN_KEYBINDS]: openKeybinds,
+		[KeybindChannels.MINIMIZE]: minimizeWindow,
+		[KeybindChannels.ADD_KEYFRAME]: addKeyframe,
+		[KeybindChannels.DELETE_KEYFRAME]: deleteKeyframe,
+	}), [addKeyframe, deleteKeyframe]); 
+
+  useKeybinds(keybinds);
+	
 	return (
 		<>
 			<div className="space-x-20 flex flex-row">
