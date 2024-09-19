@@ -5,6 +5,7 @@ import { createEnvironmentWindow, environmentWindow } from './windows/environmen
 import { mainWindow } from './windows/mainWindow';
 import { createKeybindWindow, keybindWindow } from './windows/keybindWindow';
 import { getKeybindMap, reloadKeybinds, updateKeybinds } from './keybinds/store';
+import { KeybindChannels } from './keybinds/types';
 
 ipcMain.on('open-visibility', (event, arg) => {
     if (visibilityWindow != null) {
@@ -85,4 +86,8 @@ ipcMain.handle("update-keybinds", (event, newKeybinds) => {
   
 ipcMain.handle("get-keybinds", async () => {
     return Array.from(getKeybindMap().values());
+});
+
+ipcMain.handle("get-keybind", async (event, keybindChannel: KeybindChannels) => {
+    return getKeybindMap().get(keybindChannel);
 });

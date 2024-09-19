@@ -19,9 +19,9 @@ export function createMainWindow() {
 		},
 		frame: false,
 		width: 900,
-		height: 500,
-		minHeight: 500,
-		maxHeight: 500,
+		height: 110,
+		minHeight: 110,
+		maxHeight: 110,
 		resizable: true,
 		backgroundColor: "#081110",
 		thickFrame: false,
@@ -44,8 +44,5 @@ export function createMainWindow() {
 	}
 
 	registerKeybinds(mainWindow);
-
-	// devtools
-	mainWindow.webContents.openDevTools();
 
 }

@@ -6,6 +6,11 @@ export enum KeybindChannels {
   ADD_KEYFRAME = "add-keyframe",
   SET_KEYFRAME = "set-keyframe",
   DELETE_KEYFRAME = "delete-keyframe",
+  PAUSE = "pause",
+  REWIND = "rewind",
+  APPLY_SEQUENCE = "apply-sequence",
+  SPEED_UP = "speed-up",
+  SPEED_DOWN = "speed-down",
 }
 
 export interface Keybind {
@@ -24,6 +29,11 @@ export const defaultKeybinds: Keybind[] = [
   { channel: KeybindChannels.ADD_KEYFRAME, action: "Add Keyframe", bind: "Ctrl+A" },
   { channel: KeybindChannels.SET_KEYFRAME, action: "Set Keyframe", bind: "Ctrl+Shift+S" },
   { channel: KeybindChannels.DELETE_KEYFRAME, action: "Delete Keyframe", bind: "Ctrl+D" },
+  { channel: KeybindChannels.PAUSE, action: "Pause", bind: "Shift+P" },
+  { channel: KeybindChannels.REWIND, action: "Rewind", bind: "Shift+R" },
+  { channel: KeybindChannels.APPLY_SEQUENCE, action: "Apply Sequence", bind: "Ctrl+Shift+A" },
+  { channel: KeybindChannels.SPEED_UP, action: "Speed Up", bind: "Shift+U" },
+  { channel: KeybindChannels.SPEED_DOWN, action: "Speed Down", bind: "Shift+D" },
 ];
 
 export const defaultKeybindMap = new Map<KeybindChannels, Keybind>(

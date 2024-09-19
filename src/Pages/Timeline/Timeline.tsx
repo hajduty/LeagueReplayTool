@@ -174,7 +174,7 @@ export const TimelineForm = () => {
 		return setKeyframe(keys);
 	}
 
-	const sendPlayback = (data: any) => {
+	const sendPlayback = useCallback((data: any) => {
 		setPending(true);
 
 		setTimeline({ ...timeline, [data.key]: data.value });
@@ -182,7 +182,7 @@ export const TimelineForm = () => {
 		window.ipcRenderer.invoke('post-timeline', { key: data.key, value: data.value }).finally(() => {
 			setPending(false);
 		});
-	}
+	}, [timeline]);
 
 	const sendSequence = (keys: Keyframe[]) => {
 		const cameraPosition: cameraPosition[] = [];
@@ -199,7 +199,7 @@ export const TimelineForm = () => {
 
 		window.ipcRenderer.send('post-sequence', sequence);
 		setSequence(true);
-	}
+	};
 
 	const markers = useMemo(() => {
 		return generateTimeMarkers(timeline, zoom);
