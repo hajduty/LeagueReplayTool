@@ -55,7 +55,7 @@ const Tooltip: React.FC<{ content: string; children: React.ReactNode }> = ({ con
 			{visible && (
 				<div
 					ref={tooltipRef}
-					className="fixed bg-mainbg border-gold4 border-1 text-grey1 text-xs rounded-md shadow-lg whitespace-nowrap px-2 py-1 select-none"
+					className="fixed bg-mainbg border-gold4 border-1 text-grey1 text-xs rounded-sm shadow-lg whitespace-nowrap px-2 py-1 select-none z-50"
 					style={tooltipStyle}
 				>
 					{content}
