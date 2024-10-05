@@ -1,24 +1,13 @@
 import { useEffect, useState } from "react";
 import hotkeys from "hotkeys-js";
 import { Keybind } from "../../electron/keybinds/types";
+import useKeybinds from "../hooks/useKeybinds";
 
 export const KeybindsForm: React.FC = () => {
-  const [keybinds, setKeybinds] = useState<Keybind[]>([]);
   const [editingKeybind, setEditingKeybind] = useState<Keybind | null>(null);
   const [currentKeybind, setCurrentKeybind] = useState<string>("");
 
-  useEffect(() => {
-    const fetchKeybinds = async () => {
-      try {
-        const data = await window.ipcRenderer.invoke("get-keybinds");
-        setKeybinds(data);
-      } catch (error) {
-        console.error("Failed to fetch keybinds:", error);
-      }
-    };
-
-    fetchKeybinds();
-  }, []);
+  const { keybinds, updateKeybinds } = useKeybinds({});
 
   useEffect(() => {
     const handleKeybindsUpdate = () => {
@@ -42,45 +31,43 @@ export const KeybindsForm: React.FC = () => {
           event.altKey && "Alt",
           event.metaKey && "Meta"
         ].filter(Boolean).join("+");
-    
+
         const key = (event.key.length === 1 && event.key.match(/[a-zA-Z0-9]/))
           ? event.key.toUpperCase()
           : "";
-    
+
         const newBind = key ? `${modifiers}${modifiers ? "+" : ""}${key}` : modifiers;
-    
+
         if (!newBind) {
           console.error("Invalid keybind: No key provided.");
           return;
         }
-    
+
+        console.log("New Keybind:", newBind); 
         setCurrentKeybind(newBind);
         event.preventDefault();
       }
     };
 
-    const handleKeyup = () => {
+    const handleKeyup = async () => {
       if (editingKeybind) {
-        const isDuplicate = keybinds.some((kb) => kb.bind === currentKeybind && kb.channel !== editingKeybind.channel);
-    
+        const isDuplicate = keybinds.some(kb => kb.bind === currentKeybind && kb.channel !== editingKeybind.channel);
+
         if (isDuplicate) {
           console.error("Duplicate keybinding detected.");
           alert("This keybinding is already in use. Please choose a different one.");
           return;
         }
-    
-        const updatedKeybinds = keybinds.map((kb) =>
+
+        const updatedKeybinds = keybinds.map(kb =>
           kb.channel === editingKeybind.channel ? { ...kb, bind: currentKeybind } : kb
         );
-    
+
         hotkeys.unbind(editingKeybind.bind);
         hotkeys(currentKeybind, () => console.log(`New keybind triggered: ${currentKeybind}`));
-    
-        window.ipcRenderer.invoke("update-keybinds", updatedKeybinds).catch((error) => {
-          console.error("Failed to update keybinds:", error);
-        });
-    
-        setKeybinds(updatedKeybinds);
+
+        await updateKeybinds(updatedKeybinds);
+
         setEditingKeybind(null);
         setCurrentKeybind("");
       }
@@ -95,7 +82,7 @@ export const KeybindsForm: React.FC = () => {
         document.removeEventListener("keyup", handleKeyup);
       };
     }
-  }, [editingKeybind, currentKeybind, keybinds]);
+  }, [editingKeybind, currentKeybind, keybinds, updateKeybinds]);
 
   const handleEditClick = (keybind: Keybind) => {
     setEditingKeybind(keybind);
@@ -116,7 +103,7 @@ export const KeybindsForm: React.FC = () => {
           X
         </button>
       </div>
-  
+
       <div className="text-grey2 bg-mainbg flex-1 overflow-auto p-1">
         <div className="text-grey2 bg-mainbg border-2 border-innerborder h-full p-1 no-drag overflow-x-hidden overflow-y-auto custom-scrollbar flex flex-col">
           <div className="flex-grow space-y-2">

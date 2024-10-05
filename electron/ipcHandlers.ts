@@ -82,12 +82,8 @@ ipcMain.handle('get-render', async (event, arg) => {
 ipcMain.handle("update-keybinds", (event, newKeybinds) => {
     updateKeybinds(newKeybinds);
     reloadKeybinds();
-  });
+});
   
 ipcMain.handle("get-keybinds", async () => {
     return Array.from(getKeybindMap().values());
-});
-
-ipcMain.handle("get-keybind", async (event, keybindChannel: KeybindChannels) => {
-    return getKeybindMap().get(keybindChannel);
 });

@@ -19,7 +19,7 @@ export function registerKeybinds(mainWindow: BrowserWindow) {
   keybindMap.forEach((keybind) => {
     if (keybind.bind) {
       globalShortcut.register(keybind.bind, () => {
-        console.log(`Keybind pressed: ${keybind.bind}`);
+        console.log("Keybind pressed:", keybind.channel);
         mainWindow.webContents.send(keybind.channel);
       });
     }

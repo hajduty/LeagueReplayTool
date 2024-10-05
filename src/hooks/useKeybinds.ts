@@ -1,18 +1,49 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Keybind, KeybindChannels } from "../../electron/keybinds/types";
 
-const useKeybinds = (keybinds: { [event: string]: (e: any) => void }) => {
+const useKeybinds = (keybindActions?: Partial<{ [channel in KeybindChannels]: () => void }>) => {
   
-  useEffect(() => {
-    Object.keys(keybinds).forEach((event) => {
-      window.ipcRenderer.on(event, keybinds[event]);
-    });
+  const [keybinds, setKeybinds] = useState<Keybind[]>([]);
 
-    return () => {
-      Object.keys(keybinds).forEach((event) => {
-        window.ipcRenderer.removeAllListeners(event);
-      });
+  useEffect(() => {
+    const fetchKeybinds = async () => {
+      try {
+        const data = await window.ipcRenderer.invoke("get-keybinds");
+        setKeybinds(data);
+        console.log("Keybinds fetched:", data);
+      } catch (error) {
+        console.error("Failed to fetch keybinds:", error);
+      }
     };
-  }, [keybinds]);
+
+    fetchKeybinds();
+  }, []);
+
+  useEffect(() => {
+    if (keybindActions) { 
+      Object.keys(keybindActions).forEach((channel) => {
+        window.ipcRenderer.on(channel, keybindActions[channel as KeybindChannels]!);
+      });
+
+      return () => {
+        Object.keys(keybindActions).forEach((event) => {
+          window.ipcRenderer.removeAllListeners(event);
+        });
+      };
+    }
+  }, [keybindActions]);
+
+  const updateKeybinds = async (updatedKeybinds: Keybind[]) => {
+    try {
+      await window.ipcRenderer.invoke("update-keybinds", updatedKeybinds);
+      console.log("keybinds updated", updatedKeybinds);
+      setKeybinds(updatedKeybinds);
+    } catch (error) {
+      console.error("Failed to update keybinds:", error);
+    }
+  };
+
+  return { keybinds, updateKeybinds };
 };
 
 export default useKeybinds;

@@ -1,6 +1,7 @@
-import { Keybind, KeybindChannels } from "../../electron/keybinds/types"
+import { KeybindChannels } from "../../electron/keybinds/types"
+import useKeybinds from "../hooks/useKeybinds";
 import Tooltip from "./Tooltip"
-import { ReactNode, useEffect, useState } from "react"
+import { ReactNode } from "react"
 
 interface Props {
   onClick: () => void;
@@ -11,18 +12,10 @@ interface Props {
 
 export const Button: React.FC<Props> = ({ onClick, content, tooltip, keybindChannel }) => {
 
-	const [bind, setBind] = useState<string>("Not set");
-
-	useEffect(() => {
-		const fetchKeybind = async () => {
-			const result: Keybind = await window.ipcRenderer.invoke("get-keybind", keybindChannel);
-			setBind(result.bind);
-		};
-		fetchKeybind();
-	}, [keybindChannel]);
+	const { keybinds } = useKeybinds();
 
 	return (
-		<Tooltip content={`${tooltip}: ${bind}`}>
+		<Tooltip content={`${tooltip}: ${keybinds.find((keybind) => keybind.channel == keybindChannel)?.bind || "Not found"}`}>
 			<button className="w-7 border-gold5 bg-gradient-to-b from-blue5 to-grey3 border-2 text-nowrap items-center align-middle justify-center flex"
 				onClick={onClick}>
 				{content}

@@ -38,7 +38,7 @@ export const MainControls = ({ sendPlayback, timeline, sendSequence, keyframe, s
 		[KeybindChannels.APPLY_SEQUENCE]: applySequence,
 		[KeybindChannels.SPEED_UP]: speedUp,
 		[KeybindChannels.SPEED_DOWN]: speedDown,
-	}), [pause, rewind, applySequence, speedUp, speedDown]); 
+	}), [pause, rewind, applySequence, speedUp, speedDown]);
 
 	useKeybinds(keybinds);
 
